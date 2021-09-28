@@ -13,7 +13,7 @@ app.use(
 ); // this is also a middleware function
 
 //route handlers
-app.get("/", (req, res) => {
+app.get("/signup", (req, res) => {
   res.send(`
     <div>
       Your ID is: ${req.session.userID}
@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
   `); // if req.session.userID exists, the user must be signed in
 });
 
-app.post("/", async (req, res) => {
+app.post("/signup", async (req, res) => {
   const { email, password, passwordConfirmation } = req.body;
   // test for existing email
   const existingUser = await usersRepo.getOneBy({ email });
@@ -44,6 +44,39 @@ app.post("/", async (req, res) => {
   req.session.userID = user.id; // session is created by cookie-session, includes key and value
 
   res.send("Account created");
+});
+
+app.get("/signout", (req, res) => {
+  // tell browser to forget info stored in cookie
+  req.session = null;
+  res.send("You are logged out");
+});
+
+app.get("/signin", (req, res) => {
+  res.send(`
+    <div>
+      <form method="POST">
+          <input name="email" placeholder="email" />
+          <input name="password" placeholder="password" />
+          <button>Sign In</button>
+      </form>
+    </div>
+  `);
+});
+
+app.post("/signin", async (req, res) => {
+  const { email, password } = req.body;
+  // check for user with this email
+  const user = await usersRepo.getOneBy({ email });
+  if (!user) {
+    return res.send("Email not found");
+  }
+  // check for matching password
+  if (user.password !== password) {
+    return res.send("Invalid password");
+  }
+  req.session.userID = user.id; // set cookie to sign user in
+  res.send("You are signed in");
 });
 
 //listen for incoming network requests on port 3000
