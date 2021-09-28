@@ -30,6 +30,7 @@ class UsersRepository {
     const records = await this.getAll(); // get latest collection of users
     records.push(attrs);
     await this.writeAll(records);
+    return attrs;
   }
 
   async writeAll(records) {

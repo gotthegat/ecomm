@@ -1,15 +1,22 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieSession = require("cookie-session"); // cookie manager library, adds a session property to the req object
 const usersRepo = require("./repositories/users");
 
 const app = express(); // app is our web server object
 
 app.use(bodyParser.urlencoded({ extended: true })); // applies this middleware function to all route handlers
+app.use(
+  cookieSession({
+    keys: ["23f98jsdfk89sdfgj77hfuhfsf"], // encryption key for cookies
+  })
+); // this is also a middleware function
 
 //route handlers
 app.get("/", (req, res) => {
   res.send(`
     <div>
+      Your ID is: ${req.session.userID}
         <form method="POST">
             <input name="email" placeholder="email" />
             <input name="password" placeholder="password" />
@@ -17,7 +24,7 @@ app.get("/", (req, res) => {
             <button>Sign Up</button>
         </form>
     </div>
-  `);
+  `); // if req.session.userID exists, the user must be signed in
 });
 
 app.post("/", async (req, res) => {
@@ -30,6 +37,12 @@ app.post("/", async (req, res) => {
   if (password !== passwordConfirmation) {
     return res.send("Passwords must match");
   }
+
+  // create user in user repo to represent this person
+  const user = await usersRepo.create({ email, password });
+  // store id of user in the user's cookie
+  req.session.userID = user.id; // session is created by cookie-session, includes key and value
+
   res.send("Account created");
 });
 
