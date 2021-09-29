@@ -1,87 +1,19 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session"); // cookie manager library, adds a session property to the req object
-const usersRepo = require("./repositories/users");
+const authRouter = require("./routes/admin/auth");
 
 const app = express(); // app is our web server object
 
+// middleware functions
 app.use(bodyParser.urlencoded({ extended: true })); // applies this middleware function to all route handlers
 app.use(
   cookieSession({
     keys: ["23f98jsdfk89sdfgj77hfuhfsf"], // encryption key for cookies
   })
-); // this is also a middleware function
+);
 
-//route handlers
-app.get("/signup", (req, res) => {
-  res.send(`
-    <div>
-      Your ID is: ${req.session.userID}
-        <form method="POST">
-            <input name="email" placeholder="email" />
-            <input name="password" placeholder="password" />
-            <input name="passwordConfirmation" placeholder="password confirmation" />
-            <button>Sign Up</button>
-        </form>
-    </div>
-  `); // if req.session.userID exists, the user must be signed in
-});
-
-app.post("/signup", async (req, res) => {
-  const { email, password, passwordConfirmation } = req.body;
-  // test for existing email
-  const existingUser = await usersRepo.getOneBy({ email });
-  if (existingUser) {
-    return res.send("Email in use");
-  }
-  if (password !== passwordConfirmation) {
-    return res.send("Passwords must match");
-  }
-
-  // create user in user repo to represent this person
-  const user = await usersRepo.create({ email, password });
-  // store id of user in the user's cookie
-  req.session.userID = user.id; // session is created by cookie-session, includes key and value
-
-  res.send("Account created");
-});
-
-app.get("/signout", (req, res) => {
-  // tell browser to forget info stored in cookie
-  req.session = null;
-  res.send("You are logged out");
-});
-
-app.get("/signin", (req, res) => {
-  res.send(`
-    <div>
-      <form method="POST">
-          <input name="email" placeholder="email" />
-          <input name="password" placeholder="password" />
-          <button>Sign In</button>
-      </form>
-    </div>
-  `);
-});
-
-app.post("/signin", async (req, res) => {
-  const { email, password } = req.body;
-  // check for user with this email
-  const user = await usersRepo.getOneBy({ email });
-  if (!user) {
-    return res.send("Email not found");
-  }
-  // check for matching password
-  const validPassword = await usersRepo.comparePasswords(
-    user.password,
-    password
-  );
-  if (!validPassword) {
-    return res.send("Invalid password");
-  }
-  req.session.userID = user.id; // set cookie to sign user in
-  res.send("You are signed in");
-});
+app.use(authRouter); // include authentication route handlers
 
 //listen for incoming network requests on port 3000
 app.listen(3000, () => {
