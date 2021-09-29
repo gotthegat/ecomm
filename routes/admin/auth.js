@@ -8,6 +8,8 @@ const {
   requireEmail,
   requirePassword,
   requirePasswordConfirmation,
+  requireEmailExists,
+  requireValidPasswordForUser,
 } = require("./validators");
 
 // router keeps track of all route handlers we set up
@@ -45,26 +47,25 @@ router.get("/signout", (req, res) => {
 });
 
 router.get("/signin", (req, res) => {
-  res.send(signinTemplate());
+  res.send(signinTemplate({}));
 });
 
-router.post("/signin", async (req, res) => {
-  const { email, password } = req.body;
-  // check for user with this email
-  const user = await usersRepo.getOneBy({ email });
-  if (!user) {
-    return res.send("Email not found");
+router.post(
+  "/signin",
+  [requireEmailExists, requireValidPasswordForUser],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.send(signinTemplate({ errors }));
+    }
+
+    const { email } = req.body;
+    // check for user with this email
+    const user = await usersRepo.getOneBy({ email });
+
+    req.session.userID = user.id; // set cookie to sign user in
+    res.send("You are signed in");
   }
-  // check for matching password
-  const validPassword = await usersRepo.comparePasswords(
-    user.password,
-    password
-  );
-  if (!validPassword) {
-    return res.send("Invalid password");
-  }
-  req.session.userID = user.id; // set cookie to sign user in
-  res.send("You are signed in");
-});
+);
 
 module.exports = router;
