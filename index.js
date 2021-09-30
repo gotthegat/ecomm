@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session"); // cookie manager library, adds a session property to the req object
 const authRouter = require("./routes/admin/auth");
+const productsRouter = require("./routes/admin/products");
 
 const app = express(); // app is our web server object
 
@@ -15,6 +16,7 @@ app.use(
 );
 
 app.use(authRouter); // include authentication route handlers
+app.use(productsRouter);
 
 //listen for incoming network requests on port 3000
 app.listen(3000, () => {
