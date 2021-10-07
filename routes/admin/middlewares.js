@@ -1,4 +1,5 @@
 const { validationResult } = require("express-validator");
+const users = require("../../repositories/users");
 
 module.exports = {
   handleErrors(templateFunc) {
@@ -11,5 +12,11 @@ module.exports = {
 
       next(); // carry on if everything went well
     };
+  },
+  requireAuth(req, res, next) {
+    if (!req.session.userID) {
+      return res.redirect("/signin");
+    }
+    next();
   },
 };
