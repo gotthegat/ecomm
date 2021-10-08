@@ -4,6 +4,7 @@ const cookieSession = require("cookie-session"); // cookie manager library, adds
 const authRouter = require("./routes/admin/auth");
 const adminProductsRouter = require("./routes/admin/products");
 const productsRouter = require("./routes/products");
+const cartsRouter = require("./routes/carts");
 
 const app = express(); // app is our web server object
 
@@ -19,6 +20,7 @@ app.use(
 app.use(authRouter); // include authentication route handlers
 app.use(productsRouter);
 app.use(adminProductsRouter);
+app.use(cartsRouter);
 
 //listen for incoming network requests on port 3000
 app.listen(3000, () => {
